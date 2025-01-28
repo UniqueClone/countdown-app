@@ -87,7 +87,7 @@ const Countdown: React.FC<CountdownProps> = ({ targetDate }) => {
                 </div>
             ) : (
                 <div className="bg-red-500 text-white p-6 rounded-lg shadow-lg">
-                    <span className="text-lg font-semibold animate-ping">
+                    <span className="text-lg font-semibold animate-[ping_1s_ease-in-out_infinite]">
                         Time's up!
                     </span>
                 </div>
