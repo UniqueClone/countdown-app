@@ -44,6 +44,17 @@ function App() {
                     selectedTime={targetTime}
                     setSelectedTime={handleTargetTimeChange}
                 />
+                <div
+                    onClick={() =>
+                        // Reset the time to the current time plus 1 minute
+                        handleTargetTimeChange(
+                            new Date(+new Date().setSeconds(0) + 1000 * 60)
+                        )
+                    }
+                    className="text-sm text-blue-500 cursor-pointer underline mt-2"
+                >
+                    Reset
+                </div>
             </div>
 
             {countdownStarted ? (
