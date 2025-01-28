@@ -4,11 +4,21 @@ import Countdown from "./Countdown";
 import TimePicker from "./TimePicker";
 
 const nowPlusOneMinute = () => new Date(+new Date().setSeconds(0) + 1000 * 60);
+const timePlusOneDay = (time: Date) => new Date(+time + 1000 * 60 * 60 * 24);
 
 function App() {
     const [targetTime, setTargetTime] = useState<Date>(nowPlusOneMinute());
     const [countdownStarted, setCountdownStarted] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    const handleStartCountdown = () => {
+        if (targetTime.getTime() <= Date.now()) {
+            setTargetTime(timePlusOneDay(targetTime));
+        } else {
+            setTargetTime(targetTime);
+        }
+        setCountdownStarted(true);
+    };
 
     const handleTargetTimeChange = (date: Date | null) => {
         if (date && !isNaN(date.getTime())) {
@@ -62,7 +72,10 @@ function App() {
                 <>
                     <Countdown targetDate={targetTime} />
                     <button
-                        onClick={() => setCountdownStarted(false)}
+                        onClick={() => {
+                            setCountdownStarted(false);
+                            handleTargetTimeChange(nowPlusOneMinute());
+                        }}
                         className="mt-4 px-4 py-2 bg-red-600 text-white font-semibold rounded-md shadow hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                     >
                         Stop Countdown
@@ -70,7 +83,7 @@ function App() {
                 </>
             ) : (
                 <button
-                    onClick={() => setCountdownStarted(true)}
+                    onClick={() => handleStartCountdown()}
                     className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md shadow hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                     Start Countdown
