@@ -3,8 +3,10 @@ import "./App.css";
 import Countdown from "./Countdown";
 import TimePicker from "./TimePicker";
 
+const nowPlusOneMinute = () => new Date(+new Date().setSeconds(0) + 1000 * 60);
+
 function App() {
-    const [targetTime, setTargetTime] = useState<Date>(new Date());
+    const [targetTime, setTargetTime] = useState<Date>(nowPlusOneMinute());
     const [countdownStarted, setCountdownStarted] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -46,9 +48,8 @@ function App() {
                 />
                 <div
                     onClick={() =>
-                        // Reset the time to the current time plus 1 minute
                         handleTargetTimeChange(
-                            new Date(+new Date().setSeconds(0) + 1000 * 60)
+                            nowPlusOneMinute() // 1 minute in the future
                         )
                     }
                     className="text-sm text-blue-500 cursor-pointer underline mt-2"
