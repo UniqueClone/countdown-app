@@ -81,9 +81,13 @@ const Countdown: React.FC<CountdownProps> = ({ targetDate }) => {
     // Can use tauri notifications for this
     return (
         <div className="flex justify-center space-x-2">
-            {timerComponents.length ? (
-                <div className="bg-green-800 text-white p-6 rounded-lg shadow-lg">
-                    {timerComponents}
+            {timeLeft.hours > 0 ||
+            timeLeft.minutes > 0 ||
+            timeLeft.seconds > 0 ? (
+                <div className="bg-green-800 text-white p-6 rounded-lg shadow-lg w-[250px] max-w-[250px] h-[132px] flex-col items-center justify-center content-center">
+                    {timerComponents.map((component, index) => (
+                        <div key={index}>{component}</div>
+                    ))}
                 </div>
             ) : (
                 <div className="bg-red-500 text-white p-6 rounded-lg shadow-lg">
