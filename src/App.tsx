@@ -34,6 +34,8 @@ function App() {
             } else if (date.getTime() < Date.now()) {
                 // if the selected time is in the past, add 24 hours to it
                 setTargetTime(new Date(+date + 1000 * 60 * 60 * 24)); // 24 hours in milliseconds
+                setErrorMessage(null); // clear any previous error message
+                setCountdownStarted(false); // reset the countdown
             } else {
                 // Display a custom message or use a modal instead of alert
                 console.log("Please select a future time.");
@@ -74,7 +76,6 @@ function App() {
                     <button
                         onClick={() => {
                             setCountdownStarted(false);
-                            handleTargetTimeChange(nowPlusOneMinute());
                         }}
                         className="mt-4 px-4 py-2 bg-red-600 text-white font-semibold rounded-md shadow hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                     >
