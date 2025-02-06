@@ -59,9 +59,6 @@ pub fn run() {
                     ..Default::default()
                 }))
                 .separator()
-                .item(&enable_always_on_top_menu_item)
-                .item(&disable_always_on_top_menu_item)
-                .separator()
                 .services()
                 .separator()
                 .hide()
@@ -69,11 +66,19 @@ pub fn run() {
                 .quit()
                 .build()?;
 
+            let view_submenu = SubmenuBuilder::new(app, "View")
+                .item(&enable_always_on_top_menu_item)
+                .item(&disable_always_on_top_menu_item)
+                .separator()
+                .hide_others() // hide all other windows
+                .build()?;
+
             // ... any other submenus
 
             let menu = MenuBuilder::new(app)
                 .items(&[
                     &app_submenu,
+                    &view_submenu,
                     // ... include references to any other submenus
                 ])
                 .build()?;
