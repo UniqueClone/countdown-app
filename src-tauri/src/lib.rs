@@ -66,25 +66,37 @@ pub fn run() {
                 .quit()
                 .build()?;
 
-            let view_submenu = SubmenuBuilder::new(app, "View")
-                .item(&enable_always_on_top_menu_item)
-                .item(&disable_always_on_top_menu_item)
-                .separator()
-                .hide_others() // hide all other windows
-                .build()?;
+            // only include hide and hide_others menu items on macOS
+            let view_submenu = if cfg!(target_os = "macos") {
+                SubmenuBuilder::new(app, "View")
+                    .item(&enable_always_on_top_menu_item)
+                    .item(&disable_always_on_top_menu_item)
+                    .separator()
+                    .build()?
+            } else {
+                SubmenuBuilder::new(app, "View")
+                    .item(&enable_always_on_top_menu_item)
+                    .item(&disable_always_on_top_menu_item)
+                    .build()?
+            };
 
-            // ... any other submenus
-
-            let menu = MenuBuilder::new(app)
-                .items(&[
-                    &app_submenu,
-                    &view_submenu,
-                    // ... include references to any other submenus
-                ])
-                .build()?;
+            // build the menu
+            // only include the app submenu on macOS
+            let menu = if cfg!(target_os = "macos") {
+                MenuBuilder::new(app)
+                    .items(&[
+                        &app_submenu as &dyn tauri::menu::IsMenuItem<_>,
+                        &view_submenu as &dyn tauri::menu::IsMenuItem<_>,
+                    ])
+                    .build()
+            } else {
+                MenuBuilder::new(app)
+                    .items(&[&view_submenu as &dyn tauri::menu::IsMenuItem<_>])
+                    .build()
+            };
 
             // set the menu
-            app.set_menu(menu)?;
+            app.set_menu(menu.unwrap())?;
 
             // listen for menu item click events
             let app_handle = app.handle().clone();
