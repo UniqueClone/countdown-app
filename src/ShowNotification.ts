@@ -5,6 +5,16 @@ interface NotificationOptions {
   body: string;
 }
 
+export async function requestNotificationPermission (): Promise<string> {
+    if (await isPermissionGranted()) {
+        console.log('Permission already granted');
+        return Promise.resolve('granted');
+    } else {
+        console.log('Requesting permission');
+        return requestPermission();
+    }
+}
+
 export async function showNotification (options: NotificationOptions): Promise<void> {
   let permissionGranted = await isPermissionGranted();
 
