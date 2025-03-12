@@ -1,32 +1,38 @@
 import React from "react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import dayjs, { Dayjs } from 'dayjs';
 
 interface TimePickerProps {
-    selectedTime: Date;
-    setSelectedTime: (date: Date | null) => void;
+    selectedTime: Dayjs | null;
+    setSelectedTime: (time: Dayjs | null) => void;
 }
 
-const TimePicker: React.FC<TimePickerProps> = (props: TimePickerProps) => {
-    const { selectedTime, setSelectedTime } = props;
+function TimePicker({ selectedTime, setSelectedTime }: TimePickerProps) {
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const value = event.target.value;
+        if (value) {
+            const date = dayjs(value, "HH:mm");
+            setSelectedTime(dayjs(date));
+        } else {
+            setSelectedTime(null);
+        }
+    };
 
     return (
-        <div>
-            <DatePicker
-                selected={selectedTime}
-                onChange={setSelectedTime}
-                showTimeSelect
-                showTimeSelectOnly
-                timeIntervals={5}
-                timeCaption="Time"
-                dateFormat="hh:mm aa"
-                showTimeCaption={false}
-                timeClassName={() => "text-lg"}
-                calendarClassName="custom-calendar"
-                className="custom-datepicker"
-            />
-        </div>
+        <input
+            type="time"
+            style={{
+                justifyContent: "center",
+                display: "flex",
+                margin: "0 auto",
+                width: "65%",
+                maxWidth: "300px",
+            }}
+            value={selectedTime ? selectedTime.format("HH:mm") : ""}
+            onChange={handleChange}
+            placeholder="Select Time"
+            className="border rounded w-50 p-2 bg-white text-black hover:bg-gray-300 focus:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
+        />
     );
-};
+}
 
 export default TimePicker;
