@@ -1,20 +1,31 @@
 import React, { useState, useEffect } from "react";
 import { showNotification } from "./ShowNotification";
+import dayjs, { Dayjs } from "dayjs";
 
 interface CountdownProps {
-    targetDate: Date;
+    targetDate: Dayjs;
 }
 
 interface TimeLeft {
-    // days: number;
     hours: number;
     minutes: number;
     seconds: number;
+    milliseconds: number;
 }
+
+/**
+ * Handle non-plural intervals, e.g. "hour" instead of "hours"
+ * @param interval
+ * @param value
+ * @returns
+ */
+const handleNonPluralInterval = (interval: string, value: number): string => {
+    return value === 1 ? interval.slice(0, -1) + " " : interval;
+};
 
 const Countdown: React.FC<CountdownProps> = ({ targetDate }) => {
     const calculateTimeLeft = (): TimeLeft => {
-        const difference = +targetDate - +new Date();
+        const difference = dayjs(targetDate).diff(dayjs());
         let timeLeft: TimeLeft;
 
         if (difference > 0) {
@@ -23,6 +34,7 @@ const Countdown: React.FC<CountdownProps> = ({ targetDate }) => {
                 hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
                 minutes: Math.floor((difference / 1000 / 60) % 60),
                 seconds: Math.floor((difference / 1000) % 60),
+                milliseconds: Math.floor(difference % 1000),
             };
         } else {
             timeLeft = {
@@ -30,6 +42,7 @@ const Countdown: React.FC<CountdownProps> = ({ targetDate }) => {
                 hours: 0,
                 minutes: 0,
                 seconds: 0,
+                milliseconds: 0,
             };
         }
 
@@ -40,12 +53,23 @@ const Countdown: React.FC<CountdownProps> = ({ targetDate }) => {
     const [notificationSent, setNotificationSent] = useState(false);
 
     useEffect(() => {
-        const timer = setTimeout(() => {
+        const now = dayjs();
+        const millisecondsUntilNextSecond = 1000 - now.millisecond();
+
+        const timeout = setTimeout(() => {
+            setTimeLeft(calculateTimeLeft());
+        }, millisecondsUntilNextSecond);
+
+        const interval = setInterval(() => {
             setTimeLeft(calculateTimeLeft());
         }, 1000);
 
-        return () => clearTimeout(timer);
-    });
+        // Cleanup interval and timeout on component unmount or effect re-run
+        return () => {
+            clearTimeout(timeout);
+            clearInterval(interval);
+        };
+    }, []);
 
     useEffect(() => {
         if (
@@ -66,31 +90,34 @@ const Countdown: React.FC<CountdownProps> = ({ targetDate }) => {
     const timerComponents: JSX.Element[] = [];
 
     (Object.keys(timeLeft) as (keyof TimeLeft)[]).forEach((interval) => {
-        if (!timeLeft[interval]) {
+        if (!timeLeft[interval] && interval !== "seconds") {
+            return;
+        }
+
+        if (interval === "milliseconds") {
             return;
         }
 
         timerComponents.push(
             <span key={interval} className="mx-1 text-lg font-semibold">
-                {timeLeft[interval]} {interval}{" "}
+                {timeLeft[interval]}{" "}
+                {handleNonPluralInterval(interval, timeLeft[interval])}
             </span>
         );
     });
 
-    // TODO: Add a notification when the timer reaches 0
-    // Can use tauri notifications for this
     return (
         <div className="flex justify-center space-x-2">
             {timeLeft.hours > 0 ||
             timeLeft.minutes > 0 ||
             timeLeft.seconds > 0 ? (
-                <div className="bg-green-800 text-white p-6 rounded-lg shadow-lg w-[250px] max-w-[250px] h-[132px] flex-col items-center justify-center content-center">
+                <div className="bg-green-800 text-white p-6 rounded-lg shadow-lg w-[250px] max-w-[250px] h-[132px] flex-col items-center justify-center content-center animate-[pulse_4s_ease-in-out_infinite]">
                     {timerComponents.map((component, index) => (
                         <div key={index}>{component}</div>
                     ))}
                 </div>
             ) : (
-                <div className="bg-red-500 text-white p-6 rounded-lg shadow-lg">
+                <div className="bg-red-500 w-[250px] max-w-[250px] h-[132px] p-6 flex-col content-center font-semibold text-white rounded-lg shadow-lg">
                     <span className="text-lg font-semibold animate-[ping_1s_ease-in-out_infinite]">
                         Time's up!
                     </span>
