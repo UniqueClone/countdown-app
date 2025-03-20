@@ -60,6 +60,9 @@ function App() {
                 // You can also use a state to show a message in the UI
                 setErrorMessage("Please select a future time.");
             }
+        } else {
+            console.log("Invalid date selected", date);
+            setErrorMessage("Invalid date selected. Please select a valid time.");
         }
     };
 

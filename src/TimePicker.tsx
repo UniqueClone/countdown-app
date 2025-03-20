@@ -6,15 +6,25 @@ interface TimePickerProps {
     setSelectedTime: (time: Dayjs | null) => void;
 }
 
+/**
+ * TimePicker component allows the user to select a time using a time input field.
+ * It accepts a selectedTime prop to display the current selected time and a setSelectedTime function to update the selected time.
+ * @param selectedTime - The currently selected time as a Dayjs object.
+ * @param setSelectedTime - Function to update the selected time state.
+ */
 function TimePicker({ selectedTime, setSelectedTime }: TimePickerProps) {
+
+    /**
+     * Handle the change event of the time input.
+     * This function updates the selected time state based on the input value.
+     * It parses the input value to extract the hour and minute, then sets the selected time.
+     * @param event - The event object from the input change event.
+     */
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const value = event.target.value;
-        if (value) {
-            const date = dayjs(value, "HH:mm");
-            setSelectedTime(dayjs(date));
-        } else {
-            setSelectedTime(null);
-        }
+        const [hour, minute] = event.target.value.split(":").map(Number);
+        const now = dayjs();
+        const date = now.set("hour", hour).set("minute", minute).set("second", 0).set("millisecond", 0);
+        setSelectedTime(date);
     };
 
     return (

@@ -15,7 +15,7 @@
                 "title": "countdown-app",
                 "width": 300,
                 "height": 415,
-                "resizable": false
+                "resizable": true
             }
         ],
         "security": {
