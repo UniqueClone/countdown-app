@@ -111,13 +111,13 @@ const Countdown: React.FC<CountdownProps> = ({ targetDate }) => {
             {timeLeft.hours > 0 ||
             timeLeft.minutes > 0 ||
             timeLeft.seconds > 0 ? (
-                <div className="bg-green-800 text-white p-6 rounded-lg shadow-lg w-[250px] max-w-[250px] h-[132px] flex-col items-center justify-center content-center animate-[pulse_4s_ease-in-out_infinite]">
+                <div className="bg-green-800 text-white p-6 rounded-lg shadow-lg min-w-[156px] w-[250px] max-w-[250px] h-[132px] flex-col items-center justify-center content-center animate-[pulse_4s_ease-in-out_infinite]">
                     {timerComponents.map((component, index) => (
                         <div key={index}>{component}</div>
                     ))}
                 </div>
             ) : (
-                <div className="bg-red-500 w-[250px] max-w-[250px] h-[132px] p-6 flex-col content-center font-semibold text-white rounded-lg shadow-lg">
+                <div className="bg-red-500 min-w-[120px] w-[250px] max-w-[250px] h-[132px] p-6 flex-col content-center font-semibold text-white rounded-lg shadow-lg">
                     <span className="text-lg font-semibold animate-[ping_1s_ease-in-out_infinite]">
                         Time's up!
                     </span>

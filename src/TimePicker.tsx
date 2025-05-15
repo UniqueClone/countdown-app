@@ -2,6 +2,7 @@ import React from "react";
 import dayjs, { Dayjs } from 'dayjs';
 
 interface TimePickerProps {
+    handleEnterKey: () => void;
     selectedTime: Dayjs | null;
     setSelectedTime: (time: Dayjs | null) => void;
 }
@@ -12,7 +13,7 @@ interface TimePickerProps {
  * @param selectedTime - The currently selected time as a Dayjs object.
  * @param setSelectedTime - Function to update the selected time state.
  */
-function TimePicker({ selectedTime, setSelectedTime }: TimePickerProps) {
+function TimePicker({ handleEnterKey, selectedTime, setSelectedTime }: TimePickerProps) {
 
     /**
      * Handle the change event of the time input.
@@ -39,8 +40,14 @@ function TimePicker({ selectedTime, setSelectedTime }: TimePickerProps) {
             }}
             value={selectedTime ? selectedTime.format("HH:mm") : ""}
             onChange={handleChange}
+            onKeyDown={(event => {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    handleEnterKey();
+                }
+            })}
             placeholder="Select Time"
-            className="border rounded w-50 p-2 bg-white text-black hover:bg-gray-300 focus:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
+            className="min-w-[90px] border rounded w-50 p-2 bg-white text-black hover:bg-gray-300 focus:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
         />
     );
 }
