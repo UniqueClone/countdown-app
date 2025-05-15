@@ -67,7 +67,7 @@ function App() {
     };
 
     return (
-        <main className="container p-4 pt-0 mx-auto">
+        <main className="container p-4 pt-0 mx-auto min-w-[200px]">
             <div className="mb-4">
                 <label
                     htmlFor="target-time"
@@ -76,6 +76,7 @@ function App() {
                     Select Target Time
                 </label>
                 <TimePicker
+                    handleEnterKey={() => handleStartCountdown()}
                     selectedTime={targetTime}
                     setSelectedTime={handleTargetTimeChange}
                 />
@@ -99,7 +100,7 @@ function App() {
                         onClick={() => {
                             setCountdownStarted(false);
                         }}
-                        className="mb-4 mx-8 bg-red-600 text-white font-semibold rounded-md shadow hover:bg-red-700 focus:bg-red-700 focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        className="m-auto mb-4 px-4 py-2 min-w-[120px] bg-red-600 text-white font-semibold rounded-md shadow hover:bg-red-700 focus:bg-red-700 focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                     >
                         Stop Countdown
                     </button>
@@ -109,7 +110,7 @@ function App() {
             ) : (
                 <button
                     onClick={() => handleStartCountdown()}
-                    className="mx-8 bg-green-700 text-white font-semibold rounded-md shadow hover:bg-green-800 focus:bg-green-800 focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    className="m-auto mb-4 px-4 py-2 min-w-[120px] bg-green-700 text-white font-semibold rounded-md shadow hover:bg-green-800 focus:bg-green-800 focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 >
                     Start Countdown
                 </button>
