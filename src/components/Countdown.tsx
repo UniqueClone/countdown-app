@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { showNotification } from "./ShowNotification";
+import { showNotification } from "../ShowNotification";
 import dayjs, { Dayjs } from "dayjs";
 
 interface CountdownProps {
+    onClick: () => void;
     targetDate: Dayjs;
 }
 
@@ -23,7 +24,7 @@ const handleNonPluralInterval = (interval: string, value: number): string => {
     return value === 1 ? interval.slice(0, -1) + " " : interval;
 };
 
-const Countdown: React.FC<CountdownProps> = ({ targetDate }) => {
+const Countdown: React.FC<CountdownProps> = ({ targetDate, onClick }) => {
     const calculateTimeLeft = (): TimeLeft => {
         const difference = dayjs(targetDate).diff(dayjs());
         let timeLeft: TimeLeft;
@@ -111,17 +112,29 @@ const Countdown: React.FC<CountdownProps> = ({ targetDate }) => {
             {timeLeft.hours > 0 ||
             timeLeft.minutes > 0 ||
             timeLeft.seconds > 0 ? (
-                <div className="bg-green-800 text-white p-6 rounded-lg shadow-lg min-w-[156px] w-[250px] max-w-[250px] h-[132px] flex-col items-center justify-center content-center animate-[pulse_4s_ease-in-out_infinite]">
+                <button
+                    autoFocus
+                    aria-label="Stop the countdown"
+                    className="bg-green-800 text-white p-6 rounded-lg shadow-lg min-w-[156px] w-[250px] max-w-[250px] h-[132px] flex-col items-center justify-center content-center animate-[pulse_4s_ease-in-out_infinite]"
+                    onClick={onClick}
+                    title="Click to stop the countdown"
+                >
                     {timerComponents.map((component, index) => (
                         <div key={index}>{component}</div>
                     ))}
-                </div>
+                </button>
             ) : (
-                <div className="bg-red-500 min-w-[120px] w-[250px] max-w-[250px] h-[132px] p-6 flex-col content-center font-semibold text-white rounded-lg shadow-lg">
+                <button
+                    aria-label="End the countdown"
+                    autoFocus
+                    className="bg-red-500 min-w-[120px] w-[250px] max-w-[250px] h-[132px] p-6 flex-col content-center font-semibold text-white rounded-lg shadow-lg"
+                    onClick={onClick}
+                    title="Click to end the countdown"
+                >
                     <span className="text-lg font-semibold animate-[ping_1s_ease-in-out_infinite]">
                         Time's up!
                     </span>
-                </div>
+                </button>
             )}
         </div>
     );

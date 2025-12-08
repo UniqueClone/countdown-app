@@ -33,7 +33,7 @@
 
 use tauri::{
     menu::{AboutMetadata, MenuBuilder, MenuItemBuilder, SubmenuBuilder},
-    Manager,
+    LogicalSize, Manager, Size,
 };
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -42,6 +42,15 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .invoke_handler(tauri::generate_handler![])
         .setup(|app| {
+            // set a minimum window height and width
+            if let Some(window) = app.get_webview_window("main") {
+                let min_height = 181.0;
+                let min_width = 216.0;
+                let _ = window.set_min_size(Some(Size::Logical(LogicalSize::new(
+                    min_width.into(),
+                    min_height.into(),
+                ))));
+            }
             // my custom settings menu item
             let enable_always_on_top_menu_item = MenuItemBuilder::new("Enable Always On Top")
                 .id("enable-always-on-top")
