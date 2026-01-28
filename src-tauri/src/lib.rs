@@ -32,7 +32,7 @@
 // ];
 
 use tauri::{
-    menu::{AboutMetadata, MenuBuilder, MenuItemBuilder, SubmenuBuilder},
+    menu::{AboutMetadata, CheckMenuItemBuilder, MenuBuilder, SubmenuBuilder},
     LogicalSize, Manager, Size,
 };
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
@@ -54,14 +54,10 @@ pub fn run() {
                 ))));
             }
             // my custom settings menu item
-            let enable_always_on_top_menu_item = MenuItemBuilder::new("Enable Always On Top")
-                .id("enable-always-on-top")
-                .accelerator("CmdOrControl+,")
-                .build(app)?;
-
-            let disable_always_on_top_menu_item = MenuItemBuilder::new("Disable Always On Top")
-                .id("disable-always-on-top")
-                .accelerator("CmdOrControl+.")
+            let always_on_top_menu_item = CheckMenuItemBuilder::new("Always On Top")
+                .id("always-on-top")
+                .accelerator("CmdOrControl+T")
+                .checked(false)
                 .build(app)?;
 
             // my custom app submenu
@@ -80,14 +76,12 @@ pub fn run() {
             // only include hide and hide_others menu items on macOS
             let view_submenu = if cfg!(target_os = "macos") {
                 SubmenuBuilder::new(app, "View")
-                    .item(&enable_always_on_top_menu_item)
-                    .item(&disable_always_on_top_menu_item)
+                    .item(&always_on_top_menu_item)
                     .separator()
                     .build()?
             } else {
                 SubmenuBuilder::new(app, "View")
-                    .item(&enable_always_on_top_menu_item)
-                    .item(&disable_always_on_top_menu_item)
+                    .item(&always_on_top_menu_item)
                     .build()?
             };
 
@@ -114,13 +108,21 @@ pub fn run() {
             app.on_menu_event(move |_app, event| {
                 let app_handle = app_handle.clone();
                 let window = app_handle.get_webview_window("main").unwrap();
-                if event.id() == "enable-always-on-top" {
-                    if let Err(e) = window.set_always_on_top(true) {
-                        eprintln!("Failed to enable always on top: {}", e);
-                    }
-                } else if event.id() == "disable-always-on-top" {
-                    if let Err(e) = window.set_always_on_top(false) {
-                        eprintln!("Failed to disable always on top: {}", e);
+                if event.id() == "always-on-top" {
+                    // Get the current always-on-top state
+                    if let Ok(current_state) = window.is_always_on_top() {
+                        let new_state = !current_state;
+                        if let Err(e) = window.set_always_on_top(new_state) {
+                            eprintln!("Failed to toggle always on top: {}", e);
+                        }
+                        // Update the check mark on the menu item
+                        if let Some(menu_item) = app_handle.menu().unwrap().get("always-on-top") {
+                            if let Some(check_item) = menu_item.as_check_menuitem() {
+                                if let Err(e) = check_item.set_checked(new_state) {
+                                    eprintln!("Failed to update menu item check state: {}", e);
+                                }
+                            }
+                        }
                     }
                 }
             });
@@ -128,34 +130,29 @@ pub fn run() {
             // Register global shortcuts
             let app_handle = app.handle().clone();
             
-            // Enable always on top: Cmd/Ctrl + ,
+            // Toggle always on top: Cmd/Ctrl + T
             // Modifiers::META for Mac, Modifiers::CONTROL for others
             // META = Command key on Mac
-            let enable_shortcut = if cfg!(target_os = "macos") {
-                Shortcut::new(Some(Modifiers::META), Code::Comma)
+            let toggle_shortcut = if cfg!(target_os = "macos") {
+                Shortcut::new(Some(Modifiers::META), Code::KeyT)
             } else {
-                Shortcut::new(Some(Modifiers::CONTROL), Code::Comma)
+                Shortcut::new(Some(Modifiers::CONTROL), Code::KeyT)
             };
-            let app_handle_enable = app_handle.clone();
-            app.global_shortcut().on_shortcut(enable_shortcut, move |_app, _shortcut, _event| {
-                if let Some(window) = app_handle_enable.get_webview_window("main") {
-                    if let Err(e) = window.set_always_on_top(true) {
-                        eprintln!("Failed to enable always on top: {}", e);
-                    }
-                }
-            })?;
-
-            // Disable always on top: Cmd/Ctrl + .
-            let app_handle_disable = app_handle;
-            let disable_shortcut = if cfg!(target_os = "macos") {
-                Shortcut::new(Some(Modifiers::META), Code::Period)
-            } else {
-                Shortcut::new(Some(Modifiers::CONTROL), Code::Period)
-            };
-            app.global_shortcut().on_shortcut(disable_shortcut, move |_app, _shortcut, _event| {
-                if let Some(window) = app_handle_disable.get_webview_window("main") {
-                    if let Err(e) = window.set_always_on_top(false) {
-                        eprintln!("Failed to disable always on top: {}", e);
+            app.global_shortcut().on_shortcut(toggle_shortcut, move |_app, _shortcut, _event| {
+                if let Some(window) = app_handle.get_webview_window("main") {
+                    if let Ok(current_state) = window.is_always_on_top() {
+                        let new_state = !current_state;
+                        if let Err(e) = window.set_always_on_top(new_state) {
+                            eprintln!("Failed to toggle always on top: {}", e);
+                        }
+                        // Update the check mark on the menu item
+                        if let Some(menu_item) = app_handle.menu().unwrap().get("always-on-top") {
+                            if let Some(check_item) = menu_item.as_check_menuitem() {
+                                if let Err(e) = check_item.set_checked(new_state) {
+                                    eprintln!("Failed to update menu item check state: {}", e);
+                                }
+                            }
+                        }
                     }
                 }
             })?;
