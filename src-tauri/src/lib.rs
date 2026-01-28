@@ -42,12 +42,16 @@ fn update_menu_checkmarks(app_handle: &AppHandle, is_always_on_top: bool) {
     if let Ok(menu) = app_handle.menu() {
         if let Some(enable_item) = menu.get("enable-always-on-top") {
             if let Some(check_item) = enable_item.as_check_menuitem() {
-                let _ = check_item.set_checked(!is_always_on_top);
+                if let Err(e) = check_item.set_checked(is_always_on_top) {
+                    eprintln!("Failed to update enable menu checkmark: {}", e);
+                }
             }
         }
         if let Some(disable_item) = menu.get("disable-always-on-top") {
             if let Some(check_item) = disable_item.as_check_menuitem() {
-                let _ = check_item.set_checked(is_always_on_top);
+                if let Err(e) = check_item.set_checked(!is_always_on_top) {
+                    eprintln!("Failed to update disable menu checkmark: {}", e);
+                }
             }
         }
     }
@@ -77,14 +81,14 @@ pub fn run() {
             let enable_always_on_top_menu_item = CheckMenuItemBuilder::new("Enable Always On Top")
                 .id("enable-always-on-top")
                 .accelerator("CmdOrControl+,")
-                .checked(!initial_always_on_top)
+                .checked(initial_always_on_top)
                 .build(app)?;
 
             let disable_always_on_top_menu_item =
                 CheckMenuItemBuilder::new("Disable Always On Top")
                     .id("disable-always-on-top")
                     .accelerator("CmdOrControl+.")
-                    .checked(initial_always_on_top)
+                    .checked(!initial_always_on_top)
                     .build(app)?;
 
             // my custom app submenu
@@ -137,16 +141,24 @@ pub fn run() {
             app.on_menu_event(move |_app, event| {
                 if let Some(window) = app_handle.get_webview_window("main") {
                     if event.id() == "enable-always-on-top" {
-                        if let Err(e) = window.set_always_on_top(true) {
-                            eprintln!("Failed to enable always on top: {}", e);
-                        } else {
-                            update_menu_checkmarks(&app_handle, true);
+                        if let Ok(is_on_top) = window.is_always_on_top() {
+                            if !is_on_top {
+                                if let Err(e) = window.set_always_on_top(true) {
+                                    eprintln!("Failed to enable always on top: {}", e);
+                                } else {
+                                    update_menu_checkmarks(&app_handle, true);
+                                }
+                            }
                         }
                     } else if event.id() == "disable-always-on-top" {
-                        if let Err(e) = window.set_always_on_top(false) {
-                            eprintln!("Failed to disable always on top: {}", e);
-                        } else {
-                            update_menu_checkmarks(&app_handle, false);
+                        if let Ok(is_on_top) = window.is_always_on_top() {
+                            if is_on_top {
+                                if let Err(e) = window.set_always_on_top(false) {
+                                    eprintln!("Failed to disable always on top: {}", e);
+                                } else {
+                                    update_menu_checkmarks(&app_handle, false);
+                                }
+                            }
                         }
                     }
                 }
@@ -168,10 +180,14 @@ pub fn run() {
                 enable_shortcut,
                 move |_app, _shortcut, _event| {
                     if let Some(window) = app_handle_enable.get_webview_window("main") {
-                        if let Err(e) = window.set_always_on_top(true) {
-                            eprintln!("Failed to enable always on top: {}", e);
-                        } else {
-                            update_menu_checkmarks(&app_handle_enable, true);
+                        if let Ok(is_on_top) = window.is_always_on_top() {
+                            if !is_on_top {
+                                if let Err(e) = window.set_always_on_top(true) {
+                                    eprintln!("Failed to enable always on top: {}", e);
+                                } else {
+                                    update_menu_checkmarks(&app_handle_enable, true);
+                                }
+                            }
                         }
                     }
                 },
@@ -188,10 +204,14 @@ pub fn run() {
                 disable_shortcut,
                 move |_app, _shortcut, _event| {
                     if let Some(window) = app_handle_disable.get_webview_window("main") {
-                        if let Err(e) = window.set_always_on_top(false) {
-                            eprintln!("Failed to disable always on top: {}", e);
-                        } else {
-                            update_menu_checkmarks(&app_handle_disable, false);
+                        if let Ok(is_on_top) = window.is_always_on_top() {
+                            if is_on_top {
+                                if let Err(e) = window.set_always_on_top(false) {
+                                    eprintln!("Failed to disable always on top: {}", e);
+                                } else {
+                                    update_menu_checkmarks(&app_handle_disable, false);
+                                }
+                            }
                         }
                     }
                 },
