@@ -8,6 +8,9 @@
         "opener:default",
         "notification:allow-check-permissions",
         "notification:default",
-        "core:window:allow-set-always-on-top"
+        "core:window:allow-set-always-on-top",
+        "global-shortcut:allow-is-registered",
+        "global-shortcut:allow-register",
+        "global-shortcut:allow-unregister"
     ]
 }

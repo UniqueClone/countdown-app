@@ -35,11 +35,13 @@ use tauri::{
     menu::{AboutMetadata, MenuBuilder, MenuItemBuilder, SubmenuBuilder},
     LogicalSize, Manager, Size,
 };
+use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .invoke_handler(tauri::generate_handler![])
         .setup(|app| {
             // set a minimum window height and width
@@ -122,6 +124,41 @@ pub fn run() {
                     }
                 }
             });
+
+            // Register global shortcuts
+            let app_handle = app.handle().clone();
+            
+            // Enable always on top: Cmd/Ctrl + ,
+            // Modifiers::META for Mac, Modifiers::CONTROL for others
+            // META = Command key on Mac
+            let enable_shortcut = if cfg!(target_os = "macos") {
+                Shortcut::new(Some(Modifiers::META), Code::Comma)
+            } else {
+                Shortcut::new(Some(Modifiers::CONTROL), Code::Comma)
+            };
+            let app_handle_enable = app_handle.clone();
+            app.global_shortcut().on_shortcut(enable_shortcut, move |_app, _shortcut, _event| {
+                if let Some(window) = app_handle_enable.get_webview_window("main") {
+                    if let Err(e) = window.set_always_on_top(true) {
+                        eprintln!("Failed to enable always on top: {}", e);
+                    }
+                }
+            })?;
+
+            // Disable always on top: Cmd/Ctrl + .
+            let app_handle_disable = app_handle;
+            let disable_shortcut = if cfg!(target_os = "macos") {
+                Shortcut::new(Some(Modifiers::META), Code::Period)
+            } else {
+                Shortcut::new(Some(Modifiers::CONTROL), Code::Period)
+            };
+            app.global_shortcut().on_shortcut(disable_shortcut, move |_app, _shortcut, _event| {
+                if let Some(window) = app_handle_disable.get_webview_window("main") {
+                    if let Err(e) = window.set_always_on_top(false) {
+                        eprintln!("Failed to disable always on top: {}", e);
+                    }
+                }
+            })?;
 
             Ok(())
         })
