@@ -31,11 +31,35 @@
 //     "/usr/share/applications",
 // ];
 
+use std::sync::{Arc, Mutex};
 use tauri::{
-    menu::{AboutMetadata, MenuBuilder, MenuItemBuilder, SubmenuBuilder},
+    menu::{AboutMetadata, MenuBuilder, MenuItem, MenuItemBuilder, SubmenuBuilder},
     LogicalSize, Manager, Size,
 };
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
+
+type MenuItemPair<R> = (MenuItem<R>, MenuItem<R>);
+
+fn update_always_on_top_checkmarks<R: tauri::Runtime>(
+    menu_items: &Arc<Mutex<MenuItemPair<R>>>,
+    is_enabled: bool,
+) {
+    if let Ok(items) = menu_items.lock() {
+        let enable_text = if is_enabled {
+            "✓ Enable Always On Top"
+        } else {
+            "Enable Always On Top"
+        };
+        let _ = items.0.set_text(enable_text);
+
+        let disable_text = if !is_enabled {
+            "✓ Disable Always On Top"
+        } else {
+            "Disable Always On Top"
+        };
+        let _ = items.1.set_text(disable_text);
+    }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -109,18 +133,44 @@ pub fn run() {
             // set the menu
             app.set_menu(menu.unwrap())?;
 
+            // Store menu items for updating checkmarks
+            let menu_items = Arc::new(Mutex::new((
+                enable_always_on_top_menu_item.clone(),
+                disable_always_on_top_menu_item.clone(),
+            )));
+
+            // Set initial checkmarks based on current always-on-top state
+            if let Some(window) = app.get_webview_window("main") {
+                let is_always_on_top = window.is_always_on_top().unwrap_or(false);
+                update_always_on_top_checkmarks(&menu_items, is_always_on_top);
+            }
+
             // listen for menu item click events
             let app_handle = app.handle().clone();
+            let menu_items_for_events = menu_items.clone();
             app.on_menu_event(move |_app, event| {
                 let app_handle = app_handle.clone();
-                let window = app_handle.get_webview_window("main").unwrap();
-                if event.id() == "enable-always-on-top" {
-                    if let Err(e) = window.set_always_on_top(true) {
-                        eprintln!("Failed to enable always on top: {}", e);
-                    }
-                } else if event.id() == "disable-always-on-top" {
-                    if let Err(e) = window.set_always_on_top(false) {
-                        eprintln!("Failed to disable always on top: {}", e);
+                if let Some(window) = app_handle.get_webview_window("main") {
+                    let current_state = window.is_always_on_top().unwrap_or(false);
+
+                    if event.id() == "enable-always-on-top" {
+                        if !current_state {
+                            if let Err(e) = window.set_always_on_top(true) {
+                                eprintln!("Failed to enable always on top: {}", e);
+                            }
+                        }
+                        // Always update checkmarks to reflect the actual state
+                        let new_state = window.is_always_on_top().unwrap_or(false);
+                        update_always_on_top_checkmarks(&menu_items_for_events, new_state);
+                    } else if event.id() == "disable-always-on-top" {
+                        if current_state {
+                            if let Err(e) = window.set_always_on_top(false) {
+                                eprintln!("Failed to disable always on top: {}", e);
+                            }
+                        }
+                        // Always update checkmarks to reflect the actual state
+                        let new_state = window.is_always_on_top().unwrap_or(false);
+                        update_always_on_top_checkmarks(&menu_items_for_events, new_state);
                     }
                 }
             });
@@ -137,16 +187,24 @@ pub fn run() {
                 Shortcut::new(Some(Modifiers::CONTROL), Code::Comma)
             };
             let app_handle_enable = app_handle.clone();
+            let menu_items_for_enable = menu_items.clone();
             app.global_shortcut().on_shortcut(enable_shortcut, move |_app, _shortcut, _event| {
                 if let Some(window) = app_handle_enable.get_webview_window("main") {
-                    if let Err(e) = window.set_always_on_top(true) {
-                        eprintln!("Failed to enable always on top: {}", e);
+                    let current_state = window.is_always_on_top().unwrap_or(false);
+                    if !current_state {
+                        if let Err(e) = window.set_always_on_top(true) {
+                            eprintln!("Failed to enable always on top: {}", e);
+                        }
                     }
+                    // Always update checkmarks to reflect the actual state
+                    let new_state = window.is_always_on_top().unwrap_or(false);
+                    update_always_on_top_checkmarks(&menu_items_for_enable, new_state);
                 }
             })?;
 
             // Disable always on top: Cmd/Ctrl + .
             let app_handle_disable = app_handle;
+            let menu_items_for_disable = menu_items.clone();
             let disable_shortcut = if cfg!(target_os = "macos") {
                 Shortcut::new(Some(Modifiers::META), Code::Period)
             } else {
@@ -154,9 +212,15 @@ pub fn run() {
             };
             app.global_shortcut().on_shortcut(disable_shortcut, move |_app, _shortcut, _event| {
                 if let Some(window) = app_handle_disable.get_webview_window("main") {
-                    if let Err(e) = window.set_always_on_top(false) {
-                        eprintln!("Failed to disable always on top: {}", e);
+                    let current_state = window.is_always_on_top().unwrap_or(false);
+                    if current_state {
+                        if let Err(e) = window.set_always_on_top(false) {
+                            eprintln!("Failed to disable always on top: {}", e);
+                        }
                     }
+                    // Always update checkmarks to reflect the actual state
+                    let new_state = window.is_always_on_top().unwrap_or(false);
+                    update_always_on_top_checkmarks(&menu_items_for_disable, new_state);
                 }
             })?;
 
