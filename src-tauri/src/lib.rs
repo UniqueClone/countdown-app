@@ -33,9 +33,31 @@
 
 use tauri::{
     menu::{AboutMetadata, CheckMenuItemBuilder, MenuBuilder, SubmenuBuilder},
-    LogicalSize, Manager, Size,
+    AppHandle, LogicalSize, Manager, Size,
 };
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
+
+// Helper function to toggle always-on-top state and update menu checkmark
+fn toggle_always_on_top(app_handle: &AppHandle) {
+    if let Some(window) = app_handle.get_webview_window("main") {
+        if let Ok(current_state) = window.is_always_on_top() {
+            let new_state = !current_state;
+            if let Err(e) = window.set_always_on_top(new_state) {
+                eprintln!("Failed to toggle always on top: {}", e);
+            }
+            // Update the check mark on the menu item
+            if let Ok(menu) = app_handle.menu() {
+                if let Some(menu_item) = menu.get("always-on-top") {
+                    if let Some(check_item) = menu_item.as_check_menuitem() {
+                        if let Err(e) = check_item.set_checked(new_state) {
+                            eprintln!("Failed to update menu item check state: {}", e);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -45,19 +67,24 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![])
         .setup(|app| {
             // set a minimum window height and width
-            if let Some(window) = app.get_webview_window("main") {
+            let initial_always_on_top = if let Some(window) = app.get_webview_window("main") {
                 let min_height = 181.0;
                 let min_width = 216.0;
                 let _ = window.set_min_size(Some(Size::Logical(LogicalSize::new(
                     min_width.into(),
                     min_height.into(),
                 ))));
-            }
+                // Get the actual initial always-on-top state
+                window.is_always_on_top().unwrap_or(false)
+            } else {
+                false
+            };
+            
             // my custom settings menu item
             let always_on_top_menu_item = CheckMenuItemBuilder::new("Always On Top")
                 .id("always-on-top")
                 .accelerator("CmdOrControl+T")
-                .checked(false)
+                .checked(initial_always_on_top)
                 .build(app)?;
 
             // my custom app submenu
@@ -106,24 +133,8 @@ pub fn run() {
             // listen for menu item click events
             let app_handle = app.handle().clone();
             app.on_menu_event(move |_app, event| {
-                let app_handle = app_handle.clone();
-                let window = app_handle.get_webview_window("main").unwrap();
                 if event.id() == "always-on-top" {
-                    // Get the current always-on-top state
-                    if let Ok(current_state) = window.is_always_on_top() {
-                        let new_state = !current_state;
-                        if let Err(e) = window.set_always_on_top(new_state) {
-                            eprintln!("Failed to toggle always on top: {}", e);
-                        }
-                        // Update the check mark on the menu item
-                        if let Some(menu_item) = app_handle.menu().unwrap().get("always-on-top") {
-                            if let Some(check_item) = menu_item.as_check_menuitem() {
-                                if let Err(e) = check_item.set_checked(new_state) {
-                                    eprintln!("Failed to update menu item check state: {}", e);
-                                }
-                            }
-                        }
-                    }
+                    toggle_always_on_top(&app_handle);
                 }
             });
 
@@ -139,22 +150,7 @@ pub fn run() {
                 Shortcut::new(Some(Modifiers::CONTROL), Code::KeyT)
             };
             app.global_shortcut().on_shortcut(toggle_shortcut, move |_app, _shortcut, _event| {
-                if let Some(window) = app_handle.get_webview_window("main") {
-                    if let Ok(current_state) = window.is_always_on_top() {
-                        let new_state = !current_state;
-                        if let Err(e) = window.set_always_on_top(new_state) {
-                            eprintln!("Failed to toggle always on top: {}", e);
-                        }
-                        // Update the check mark on the menu item
-                        if let Some(menu_item) = app_handle.menu().unwrap().get("always-on-top") {
-                            if let Some(check_item) = menu_item.as_check_menuitem() {
-                                if let Err(e) = check_item.set_checked(new_state) {
-                                    eprintln!("Failed to update menu item check state: {}", e);
-                                }
-                            }
-                        }
-                    }
-                }
+                toggle_always_on_top(&app_handle);
             })?;
 
             Ok(())
