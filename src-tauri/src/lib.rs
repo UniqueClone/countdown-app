@@ -79,7 +79,7 @@ pub fn run() {
             } else {
                 false
             };
-            
+
             // my custom settings menu item
             let always_on_top_menu_item = CheckMenuItemBuilder::new("Always On Top")
                 .id("always-on-top")
@@ -140,7 +140,7 @@ pub fn run() {
 
             // Register global shortcuts
             let app_handle = app.handle().clone();
-            
+
             // Toggle always on top: Cmd/Ctrl + T
             // Modifiers::META for Mac, Modifiers::CONTROL for others
             // META = Command key on Mac
@@ -149,9 +149,12 @@ pub fn run() {
             } else {
                 Shortcut::new(Some(Modifiers::CONTROL), Code::KeyT)
             };
-            app.global_shortcut().on_shortcut(toggle_shortcut, move |_app, _shortcut, _event| {
-                toggle_always_on_top(&app_handle);
-            })?;
+            app.global_shortcut().on_shortcut(
+                toggle_shortcut,
+                move |_app, _shortcut, _event| {
+                    toggle_always_on_top(&app_handle);
+                },
+            )?;
 
             Ok(())
         })
